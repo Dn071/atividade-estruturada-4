@@ -1,236 +1,279 @@
 // QUESTÃO 1
 
 #include <stdio.h>
-#define TAM 100
+#include <stdlib.h>
 
-int fila[TAM];
-int inicio = 0, fim = 0;
+#define MAX 100
 
-void enfileirar(int valor) {
-    if (fim == TAM) {
-        printf("Fila cheia!\n");
-    } else {
-        fila[fim] = valor;
-        fim++;
-    }
+typedef struct {
+    int dados[MAX];
+    int inicio;
+    int fim;
+    int tamanho;
+} Fila;
+
+void inicializar(Fila *f) { f->inicio = 0; f->fim = -1; f->tamanho = 0; }
+int vazia(Fila *f)         { return f->tamanho == 0; }
+int cheia(Fila *f)         { return f->tamanho == MAX; }
+
+int enfileirar(Fila *f, int valor) {
+    if (cheia(f)) { printf("Fila cheia!\n"); return 0; }
+    f->fim = (f->fim + 1) % MAX;
+    f->dados[f->fim] = valor;
+    f->tamanho++;
+    return 1;
 }
 
-void desenfileirarMultiplos2() {
-    if (inicio == fim) {
-        printf("Fila vazia!\n");
-    } else {
-        printf("Multiplos de 2:\n");
-
-        while (inicio < fim) {
-            if (fila[inicio] % 2 == 0) {
-                printf("%d\n", fila[inicio]);
-            }
-            inicio++;
-        }
-    }
+int desenfileirar(Fila *f, int *valor) {
+    if (vazia(f)) return 0;
+    *valor = f->dados[f->inicio];
+    f->inicio = (f->inicio + 1) % MAX;
+    f->tamanho--;
+    return 1;
 }
 
-int main() {
-    int opcao, num;
+int main(void) {
+    Fila f;
+    inicializar(&f);
+    int opcao = 0, valor;
 
     do {
-        printf("\n1 - Enfileirar numero positivo\n");
-        printf("2 - Desenfileirar tudo e mostrar multiplos de 2\n");
-        printf("3 - Sair\n");
+        printf("\n=== MENU - FILA SEQUENCIAL ===\n");
+        printf("1. Enfileirar numero inteiro positivo\n");
+        printf("2. Desenfileirar tudo e imprimir multiplos de 2\n");
+        printf("3. Terminar programa\n");
         printf("Opcao: ");
-        scanf("%d", &opcao);
 
-        switch(opcao) {
+        if (scanf("%d", &opcao) != 1) break;   /* EOF ou erro */
 
+        switch (opcao) {
             case 1:
-                printf("Digite um numero positivo: ");
-                scanf("%d", &num);
-
-                if(num > 0) {
-                    enfileirar(num);
-                } else {
-                    printf("Numero invalido!\n");
+                printf("Digite um numero inteiro positivo: ");
+                if (scanf("%d", &valor) != 1) break;
+                if (valor <= 0) {
+                    printf("Valor invalido! Digite um numero positivo.\n");
+                } else if (enfileirar(&f, valor)) {
+                    printf("Numero %d enfileirado com sucesso.\n", valor);
                 }
                 break;
 
             case 2:
-                desenfileirarMultiplos2();
+                if (vazia(&f)) {
+                    printf("Fila vazia!\n");
+                } else {
+                    printf("Multiplos de 2 encontrados: ");
+                    int encontrou = 0;
+                    while (desenfileirar(&f, &valor)) {
+                        if (valor % 2 == 0) { printf("%d ", valor); encontrou = 1; }
+                    }
+                    if (!encontrou) printf("(nenhum)");
+                    printf("\nFila esvaziada.\n");
+                }
                 break;
 
             case 3:
-                printf("Programa encerrado.\n");
+                printf("Encerrando programa...\n");
                 break;
 
             default:
                 printf("Opcao invalida!\n");
         }
-
-    } while(opcao != 3);
+    } while (opcao != 3);
 
     return 0;
 }
-
 //QUESTÃO 2
 
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 
-#define TAM 100
+#define MAX 200
 
-char fila[TAM];
-char pilha[TAM];
+/* ── Fila de char ── */
+typedef struct {
+    char dados[MAX];
+    int inicio;
+    int fim;
+    int tamanho;
+} FilaChar;
 
-int inicio = 0, fim = 0;
-int topo = -1;
-
-void enfileirar(char c) {
-    fila[fim] = c;
-    fim++;
+void fila_init(FilaChar *f) {
+    f->inicio  = 0;
+    f->fim     = -1;
+    f->tamanho = 0;
 }
 
-char desenfileirar() {
-    char c = fila[inicio];
-    inicio++;
-    return c;
+int fila_vazia(FilaChar *f) { return f->tamanho == 0; }
+int fila_cheia(FilaChar *f) { return f->tamanho == MAX; }
+
+int fila_enfileirar(FilaChar *f, char c) {
+    if (fila_cheia(f)) return 0;
+    f->fim = (f->fim + 1) % MAX;
+    f->dados[f->fim] = c;
+    f->tamanho++;
+    return 1;
 }
 
-void empilhar(char c) {
-    topo++;
-    pilha[topo] = c;
+int fila_desenfileirar(FilaChar *f, char *c) {
+    if (fila_vazia(f)) return 0;
+    *c = f->dados[f->inicio];
+    f->inicio = (f->inicio + 1) % MAX;
+    f->tamanho--;
+    return 1;
 }
 
-char desempilhar() {
-    char c = pilha[topo];
-    topo--;
-    return c;
+/* ── Pilha de char ── */
+typedef struct {
+    char dados[MAX];
+    int topo;
+} Pilha;
+
+void pilha_init(Pilha *p) { p->topo = -1; }
+
+int pilha_vazia(Pilha *p) { return p->topo == -1; }
+int pilha_cheia(Pilha *p) { return p->topo == MAX - 1; }
+
+int pilha_empilhar(Pilha *p, char c) {
+    if (pilha_cheia(p)) return 0;
+    p->dados[++p->topo] = c;
+    return 1;
 }
 
-int main() {
+int pilha_desempilhar(Pilha *p, char *c) {
+    if (pilha_vazia(p)) return 0;
+    *c = p->dados[p->topo--];
+    return 1;
+}
 
-    char texto[TAM];
-    int i;
+int main(void) {
+    FilaChar fila;
+    Pilha    pilha;
 
+    fila_init(&fila);
+    pilha_init(&pilha);
+
+    char entrada[MAX];
     printf("Digite uma sequencia de caracteres: ");
-    fgets(texto, TAM, stdin);
+    fgets(entrada, MAX, stdin);
 
-    for(i = 0; texto[i] != '\0'; i++) {
-        enfileirar(texto[i]);
+    /* Remove newline */
+    int len = strlen(entrada);
+    if (len > 0 && entrada[len - 1] == '\n')
+        entrada[len - 1] = '\0';
+
+    /* Enfileira todos os caracteres */
+    for (int i = 0; entrada[i] != '\0'; i++) {
+        fila_enfileirar(&fila, entrada[i]);
     }
 
-    while(inicio < fim) {
+    printf("Sequencia enfileirada: %s\n", entrada);
 
-        char c = desenfileirar();
-
-        if(isalpha(c)) {
-            empilhar(tolower(c));
+    /* Desenfileira e empilha com conversão */
+    char c;
+    while (fila_desenfileirar(&fila, &c)) {
+        if (isalpha((unsigned char)c)) {
+            pilha_empilhar(&pilha, (char)tolower((unsigned char)c));
         } else {
-            empilhar(c);
+            pilha_empilhar(&pilha, c);
         }
     }
 
-    printf("\nResultado:\n");
-
-    while(topo >= 0) {
-        printf("%c", desempilhar());
+    /* Desempilha e exibe */
+    printf("Resultado apos desempilhar: ");
+    while (pilha_desempilhar(&pilha, &c)) {
+        printf("%c", c);
     }
+    printf("\n");
 
     return 0;
 }
-
 //QUESTÃO 3
 
 #include <stdio.h>
+#include <stdlib.h>
 
-#define TAM 5
+#define MAX 100
 
-int fila[TAM];
-int inicio = 0, fim = 0, qtd = 0;
+typedef struct {
+    int dados[MAX];
+    int inicio;
+    int fim;
+    int contador;
+} FilaCircular;
 
-void enfileirar(int valor) {
+void inicializar(FilaCircular *f) { f->inicio = 0; f->fim = 0; f->contador = 0; }
+int vazia(FilaCircular *f) { return f->contador == 0; }
+int cheia(FilaCircular *f) { return f->contador == MAX; }
 
-    if(qtd == TAM) {
-        printf("Fila cheia!\n");
-    } else {
-        fila[fim] = valor;
-        fim = (fim + 1) % TAM;
-        qtd++;
-    }
+int enfileirar(FilaCircular *f, int valor) {
+    if (cheia(f)) { printf("Fila cheia!\n"); return 0; }
+    f->dados[f->fim] = valor;
+    f->fim = (f->fim + 1) % MAX;
+    f->contador++;
+    return 1;
 }
 
-int desenfileirar() {
-
-    int valor = fila[inicio];
-
-    inicio = (inicio + 1) % TAM;
-    qtd--;
-
-    return valor;
+int desenfileirar(FilaCircular *f, int *valor) {
+    if (vazia(f)) return 0;
+    *valor = f->dados[f->inicio];
+    f->inicio = (f->inicio + 1) % MAX;
+    f->contador--;
+    return 1;
 }
 
-int main() {
-
-    int opcao, valor;
+int main(void) {
+    FilaCircular f;
+    inicializar(&f);
+    int opcao = 0, valor;
 
     do {
-
-        printf("\n1 - Enfileirar valor\n");
-        printf("2 - Desenfileirar e mostrar dobro\n");
-        printf("3 - Desenfileirar tudo\n");
-        printf("4 - Sair\n");
+        printf("\n=== MENU - FILA CIRCULAR ===\n");
+        printf("1. Enfileirar valor inteiro nao nulo\n");
+        printf("2. Desenfileirar um valor (exibe o dobro)\n");
+        printf("3. Desenfileirar tudo (sem alteracao)\n");
+        printf("4. Terminar programa\n");
         printf("Opcao: ");
-        scanf("%d", &opcao);
 
-        switch(opcao) {
+        if (scanf("%d", &opcao) != 1) break;
 
+        switch (opcao) {
             case 1:
-
                 printf("Digite um valor inteiro nao nulo: ");
-                scanf("%d", &valor);
-
-                if(valor != 0) {
-                    enfileirar(valor);
-                } else {
-                    printf("Valor invalido!\n");
+                if (scanf("%d", &valor) != 1) break;
+                if (valor == 0) {
+                    printf("Valor invalido! O numero nao pode ser zero.\n");
+                } else if (enfileirar(&f, valor)) {
+                    printf("Valor %d enfileirado.\n", valor);
                 }
-
                 break;
 
             case 2:
-
-                if(qtd == 0) {
+                if (vazia(&f)) {
                     printf("Fila vazia!\n");
-                } else {
-                    valor = desenfileirar();
-                    printf("Dobro: %d\n", valor * 2);
+                } else if (desenfileirar(&f, &valor)) {
+                    printf("Valor desenfileirado: %d | Dobro: %d\n", valor, valor * 2);
                 }
-
                 break;
 
             case 3:
-
-                if(qtd == 0) {
+                if (vazia(&f)) {
                     printf("Fila vazia!\n");
                 } else {
-
-                    printf("Valores:\n");
-
-                    while(qtd > 0) {
-                        printf("%d\n", desenfileirar());
-                    }
+                    printf("Valores desenfileirados: ");
+                    while (desenfileirar(&f, &valor)) printf("%d ", valor);
+                    printf("\nFila esvaziada.\n");
                 }
-
                 break;
 
             case 4:
-                printf("Programa encerrado.\n");
+                printf("Encerrando programa...\n");
                 break;
 
             default:
                 printf("Opcao invalida!\n");
         }
-
-    } while(opcao != 4);
+    } while (opcao != 4);
 
     return 0;
 }
@@ -241,57 +284,127 @@ int main() {
 #include <ctype.h>
 #include <string.h>
 
-#define TAM 100
+#define MAX 200
 
-char filaA[TAM];
-int filaB[TAM];
+/* ── Fila A: simples de char ── */
+typedef struct {
+    char dados[MAX];
+    int inicio;
+    int fim;
+    int tamanho;
+} FilaChar;
 
-int iniA = 0, fimA = 0;
-int iniB = 0, fimB = 0;
-
-void enfileirarA(char c) {
-    filaA[fimA] = c;
-    fimA++;
+void filaA_init(FilaChar *f) {
+    f->inicio  = 0;
+    f->fim     = -1;
+    f->tamanho = 0;
 }
 
-void enfileirarB(int n) {
-    filaB[fimB] = n;
-    fimB++;
+int filaA_vazia(FilaChar *f) { return f->tamanho == 0; }
+int filaA_cheia(FilaChar *f) { return f->tamanho == MAX; }
+
+int filaA_enfileirar(FilaChar *f, char c) {
+    if (filaA_cheia(f)) return 0;
+    f->fim = (f->fim + 1) % MAX;
+    f->dados[f->fim] = c;
+    f->tamanho++;
+    return 1;
 }
 
-int main() {
+int filaA_desenfileirar(FilaChar *f, char *c) {
+    if (filaA_vazia(f)) return 0;
+    *c = f->dados[f->inicio];
+    f->inicio = (f->inicio + 1) % MAX;
+    f->tamanho--;
+    return 1;
+}
 
-    char texto[TAM];
-    int i;
+/* ── Fila B: circular de int com contador ── */
+typedef struct {
+    int dados[MAX];
+    int inicio;
+    int fim;
+    int contador;
+} FilaCircularInt;
 
-    printf("Digite um vetor de caracteres: ");
-    fgets(texto, TAM, stdin);
+void filaB_init(FilaCircularInt *f) {
+    f->inicio   = 0;
+    f->fim      = 0;
+    f->contador = 0;
+}
 
-    for(i = 0; texto[i] != '\0'; i++) {
+int filaB_vazia(FilaCircularInt *f) { return f->contador == 0; }
+int filaB_cheia(FilaCircularInt *f) { return f->contador == MAX; }
 
-        if(isdigit(texto[i])) {
+int filaB_enfileirar(FilaCircularInt *f, int valor) {
+    if (filaB_cheia(f)) return 0;
+    f->dados[f->fim] = valor;
+    f->fim = (f->fim + 1) % MAX;
+    f->contador++;
+    return 1;
+}
 
-            enfileirarB(texto[i] - '0');
+int filaB_desenfileirar(FilaCircularInt *f, int *valor) {
+    if (filaB_vazia(f)) return 0;
+    *valor = f->dados[f->inicio];
+    f->inicio = (f->inicio + 1) % MAX;
+    f->contador--;
+    return 1;
+}
 
-        } else if(isalpha(texto[i])) {
+int main(void) {
+    FilaChar      filaA;
+    FilaCircularInt filaB;
 
-            enfileirarA(texto[i]);
+    filaA_init(&filaA);
+    filaB_init(&filaB);
+
+    char entrada[MAX];
+    printf("Digite uma sequencia de caracteres: ");
+    fgets(entrada, MAX, stdin);
+
+    /* Remove newline */
+    int len = strlen(entrada);
+    if (len > 0 && entrada[len - 1] == '\n')
+        entrada[len - 1] = '\0';
+
+    printf("Entrada: %s\n\n", entrada);
+
+    /* Distribui nas filas */
+    for (int i = 0; entrada[i] != '\0'; i++) {
+        char c = entrada[i];
+        if (isdigit((unsigned char)c)) {
+            int num = c - '0';  /* converte dígito para valor numérico real */
+            filaB_enfileirar(&filaB, num);
+        } else if (isalpha((unsigned char)c)) {
+            filaA_enfileirar(&filaA, c);
+        }
+        /* outros caracteres: ignorados */
+    }
+
+    /* Desenfileira B (inteiros) */
+    printf("Fila B (digitos convertidos para inteiro): ");
+    if (filaB_vazia(&filaB)) {
+        printf("(vazia)");
+    } else {
+        int val;
+        while (filaB_desenfileirar(&filaB, &val)) {
+            printf("%d ", val);
         }
     }
+    printf("\n");
 
-    printf("\nFila B (numeros):\n");
-
-    while(iniB < fimB) {
-        printf("%d ", filaB[iniB]);
-        iniB++;
+    /* Desenfileira A (letras) */
+    printf("Fila A (letras):                          ");
+    if (filaA_vazia(&filaA)) {
+        printf("(vazia)");
+    } else {
+        char c;
+        while (filaA_desenfileirar(&filaA, &c)) {
+            printf("%c ", c);
+        }
     }
-
-    printf("\n\nFila A (letras):\n");
-
-    while(iniA < fimA) {
-        printf("%c ", filaA[iniA]);
-        iniA++;
-    }
+    printf("\n");
 
     return 0;
 }
